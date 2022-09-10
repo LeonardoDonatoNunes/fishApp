@@ -1,0 +1,107 @@
+
+.skin-blue .main-header .navbar {
+    background-color: #017e7f;
+}
+
+.skin-blue .main-header .logo,
+.skin-blue .main-header .logo:hover {
+    background-color: #076060;
+}
+
+.skin-blue .sidebar-menu>li:hover>a {
+    border-left-color: #035656;
+}
+
+.main-header .sidebar-toggle:hover { 
+    background-color: #076060 !important;
+}
+
+#dropdown_upmenu_ui {
+  height: 51px;
+}
+
+#dropdown_upmenu_ui  .selectize-input {
+    text-align: right;
+    padding-right: 32px;
+    background-color: #017e7f;
+    border: 0px;
+    color:#b3b3b3;
+    font-weight:bold;
+    padding-top: 15px;
+    font-size: 16px;
+}
+
+#dropdown_upmenu_ui  .selectize-input:focus,
+#dropdown_upmenu_ui  .selectize-input:active,
+#dropdown_upmenu_ui  .selectize-input:visited {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+#dropdown_upmenu_ui .selectize-input:after {
+  width: 0; 
+  height: 0; 
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 6px solid #fff;
+  position: absolute;
+  top: 60%;
+  right: 12px;
+  content: "";
+  z-index: 98;
+}
+
+ 
+ /* Geral */
+ /* inicio */
+ 
+.modal-content {
+    border-radius: 10px;
+}
+
+.display_flex_row {
+    display: flex;
+    gap: 10px;
+}
+
+.input_box {
+    padding-bottom: 10px;
+}
+
+.select_plus_button button {
+  margin: auto;
+  transform: translate(0px, -3px);
+}
+
+
+/* fim */
+/* Geral */
+
+
+
+ /* Cadastro peixe */
+ /* inicio */
+.cadastro_peixe .shiny-input-radiogroup {
+    padding-right: 12px;
+ }
+ 
+ .cadastro_peixe .box {
+    height: 430px;
+    overflow: auto;
+ }
+
+/* fim */
+/* Cadastro peixe */
+
+
+ /* Cadastro pessoa */
+ /* inicio */
+
+.nome_projeto {
+    background-color: #50a7a826;
+    border-radius: 6px;
+    padding: 3px;
+}
+
+/* fim */
+/* Cadastro pessoa */

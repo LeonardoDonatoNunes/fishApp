@@ -1,0 +1,1 @@
+remotes::install_local('C:/Projetos/R/Neotropical/fishApp', force = TRUE)
