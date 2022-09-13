@@ -31,7 +31,7 @@ mod_cadastro_bases_server <- function(id, user){
       vct_equipamentos <- c("Nenhum equipamento cadastrado" = 0)
       vct_locais <- c("Nenhum local cadastrado" = 0)
       
-      dados$locais <- select_locais(user$con)
+      dados$locais <- select_locais(user$pool)
       
       if (nrow(dados$locais) != 0) {
         vct_locais <- dados$locais$id %>% setNames(dados$locais$nome)
@@ -84,7 +84,7 @@ mod_cadastro_bases_server <- function(id, user){
     
     observeEvent(input$tipo, {
       
-      dados$equipamentos <- select_equipamento(user$con, input$tipo)
+      dados$equipamentos <- select_equipamento(user$pool, input$tipo)
       
       if (nrow(dados$equipamentos) != 0) {
         
@@ -292,9 +292,9 @@ mod_cadastro_bases_server <- function(id, user){
     observeEvent(input$salvar_local, {
       
       id_local <- NA
-      upsert_local(user$con, id_local, user$info_projeto_sel$id, input$nome_local, input$tipo_local, input$latitude, input$longitude)
+      upsert_local(user$pool, id_local, user$info_projeto_sel$id, input$nome_local, input$tipo_local, input$latitude, input$longitude)
       shinyalert::shinyalert("Local salvo!", type = "success")
-      dados$locais <- select_locais(user$con)
+      dados$locais <- select_locais(user$pool)
       vct_locais <- dados$locais$id %>% setNames(dados$locais$nome)
       updateSelectInput(inputId = 'local_id', choices = vct_locais)      
       removeModal()
@@ -306,9 +306,9 @@ mod_cadastro_bases_server <- function(id, user){
     observeEvent(input$salvar_equipamento, {
       
       id_equipamento <- NA
-      upsert_equipamenoto(user$con, id_equipamento, input$numero_serie, input$tipo_equipamento, input$marca_equipamento, input$modelo_equipamento)
+      upsert_equipamenoto(user$pool, id_equipamento, input$numero_serie, input$tipo_equipamento, input$marca_equipamento, input$modelo_equipamento)
       shinyalert::shinyalert("Equipamento salvo!", type = "success")
-      dados$equipamentos <- select_equipamento(user$con, input$tipo)
+      dados$equipamentos <- select_equipamento(user$pool, input$tipo)
       vct_equipamentos <- dados$equipamentos$id %>% setNames(dados$equipamentos$numero_serie)
       updateSelectInput(inputId = 'equipamento_id', choices = vct_equipamentos)      
       removeModal()
@@ -319,7 +319,7 @@ mod_cadastro_bases_server <- function(id, user){
     observeEvent(input$salvar, {
       
       id <- NA
-      upsert_base(user$con, id, user$info_projeto_sel$id, input$nome, input$local_id, input$equipamento_id, input$data_hora_ini, input$data_hora_fim)
+      upsert_base(user$pool, id, user$info_projeto_sel$id, input$nome, input$local_id, input$equipamento_id, input$data_hora_ini, input$data_hora_fim)
       shinyalert::shinyalert("Base salva!", type = "success")
       removeModal()
       

@@ -7,12 +7,12 @@
 #' @import dplyr
 #' @import purrr
 #' @import leaflet
-#' @import RSQLite
 #' @import shinyTime
 #' @import shinyWidgets
 #' @import shinyjs
 #' @import shinyalert
 #' @import reactable
+#' @import pool
 #' @import dbx
 #' @import DBI
 #' @import shinyFeedback
@@ -25,19 +25,19 @@ app_server <- function( input, output, session ) {
   
   output$dropdown_upmenu_ui <- renderUI({
     
-    user$con <- dbConnect(
-      drv = dbDriver("PostgreSQL"), 
-      dbname = "fishApp",
+    user$pool <- dbPool(
+      drv = dbDriver("PostgreSQL"),
+      host = "localhost",
       user = "postgres",
       password = "postgres",
-      host = "localhost",
-      port = 5432)
+      port = 5432
+    )
     
-    if (!DBI::dbExistsTable(user$con, "projetos")) {
-      create_bd(user$con)
+    if (!DBI::dbExistsTable(user$pool, "projetos")) {
+      create_bd(user$pool)
     }
     
-    user$info_projeto <- get_projetos(user$con)
+    user$info_projeto <- get_projetos(user$pool)
     
     
     vct_proj <- c("Nenhum projeto cadastrado" = 0)
@@ -77,6 +77,7 @@ app_server <- function( input, output, session ) {
     stopApp()
   })
   
+  
 }
 
 
@@ -89,7 +90,15 @@ app_server <- function( input, output, session ) {
 #'
 #' @examples get_projetos(con)
 get_projetos <- function(con) {
-  DBI::dbGetQuery(con,"select * from projetos")
+  
+  conn <- poolCheckout(con)
+  
+  query_return <- DBI::dbGetQuery(con, "select * from projetos")
+  
+  poolReturn(conn)
+  
+  return(query_return)
+  
 }
 
 #' Buscar pessoas
@@ -102,6 +111,8 @@ get_projetos <- function(con) {
 #' @examples get_projetos(con)
 get_pessoas_projetos <- function(con) {
   
+  conn <- poolCheckout(con)
+  
   query <- "
    select p.id, p.nome, p.cargo, pr.id as projeto_id, pr.nome as projeto
     from pessoas p 
@@ -109,8 +120,84 @@ get_pessoas_projetos <- function(con) {
     left join projetos pr on pp.projeto_id = pr.id;
   "
   
-  query_return <- DBI::dbGetQuery(con, query)
+  query_return <- DBI::dbGetQuery(conn, query)
   
+  poolReturn(conn)
+  
+  return(query_return)
+  
+}
+
+#' Buscar locais
+#'
+#' @param con 
+#'
+#' @return data_frame
+#' @export
+#'
+#' @examples get_locais(con)
+get_locais <- function(con, projeto_id) {
+  
+  conn <- poolCheckout(con)
+  
+  query <- glue::glue("
+  select *
+  from locais 
+  where projeto_id = {projeto_id}
+  ")
+  
+  query_return <- DBI::dbGetQuery(conn, query)
+  
+  poolReturn(conn)
+  return(query_return)
+  
+}
+
+#' Buscar equipamentos
+#'
+#' @param con 
+#'
+#' @return data_frame
+#' @export
+#'
+#' @examples get_equipamentos(con)
+get_equipamentos <- function(con, projeto_id) {
+  
+  conn <- poolCheckout(con)
+  
+  query <- glue::glue("
+  select *
+  from equipamentos 
+  where projeto_id = {projeto_id}
+  ")
+  
+  query_return <- DBI::dbGetQuery(conn, query)
+  
+  poolReturn(conn)
+  return(query_return)
+  
+}
+
+#' Buscar peixes
+#'
+#' @param con 
+#'
+#' @return data_frame
+#' @export
+#'
+#' @examples get_peixes(con)
+get_peixes <- function(con) {
+  
+  conn <- poolCheckout(con)
+  
+  query <- glue::glue("
+  select *
+  from peixes
+  ")
+  
+  query_return <- DBI::dbGetQuery(conn, query)
+  
+  poolReturn(conn)
   return(query_return)
   
 }
@@ -131,7 +218,7 @@ campo_obrigatorio_feedback <- function(inputId, show) {
     show = show,
     text = "Campo obrigatório!",
     color = "red", 
-    icon = icon('exclamation-triangle'))
+    icon = icon('triangle-exclamation'))
   
 }
 

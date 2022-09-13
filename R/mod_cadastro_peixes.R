@@ -26,8 +26,8 @@ mod_cadastro_peixes_server <- function(id, user){
     # renderUI | index ----------------------------------------------------  
     output$index <- renderUI({
       
-      dados$peixes <- get_peixes(user$con)
-      dados$pessoas <- get_pessoas(user$con)
+      dados$peixes <- get_peixes(user$pool)
+      dados$pessoas <- get_pessoas(user$pool)
       
       vct_peixes <- NULL
       if (!is.null(dados$peixes)) {
@@ -118,8 +118,8 @@ mod_cadastro_peixes_server <- function(id, user){
     
     # Observe | salvar_especie ----------------------------------------------
     observeEvent(input$salvar_especie, {
-      insert_peixe(user$con, input$especie_nova, input$nome_comum, input$genero, input$familia)
-      dados$peixes <- get_peixes(user$con)
+      insert_peixe(user$pool, input$especie_nova, input$nome_comum, input$genero, input$familia)
+      dados$peixes <- get_peixes(user$pool)
       shinyalert::shinyalert("Nova espécie adicionada")
       removeModal()
     })
@@ -149,7 +149,7 @@ mod_cadastro_peixes_server <- function(id, user){
     # Observe | salvar_pessoa ----------------------------------------------
     observeEvent(input$salvar_pessoa, {
       insert_pessoa(con, input$pessoa_nova, input$funcao)
-      dados$pessoas <- get_pessoas(user$con)
+      dados$pessoas <- get_pessoas(user$pool)
       shinyalert::shinyalert("Nova pessoa adicionada")
       removeModal()
     })

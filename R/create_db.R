@@ -8,6 +8,36 @@
 #' @examples create_bd(con)
 create_bd <- function(con) {
   
+  DBI::dbGetQuery(
+    con,
+    "DROP DATABASE IF EXISTS fishApp;"
+  )
+  
+  DBI::dbGetQuery(
+    con,
+    "CREATE DATABASE fishApp
+    WITH
+    OWNER = postgres
+    ENCODING = 'UTF8'
+    LC_COLLATE = 'Portuguese_Brazil.1252'
+    LC_CTYPE = 'Portuguese_Brazil.1252'
+    TABLESPACE = pg_default
+    CONNECTION LIMIT = -1
+    IS_TEMPLATE = False;
+    "
+  )
+  
+  
+  
+  DBI::dbGetQuery(
+    con,
+    "
+    COMMENT ON DATABASE fishApp
+    IS 'Banco de dados da aplica??o fishApp';
+    "
+  )
+  
+  
   query_list <- list(
     
     projetos = "
@@ -42,10 +72,12 @@ create_bd <- function(con) {
     equipamentos = "
     CREATE TABLE equipamentos (
       id SERIAL PRIMARY KEY,
+      projeto_id INTEGER NOT NULL,
       numero_serie VARCHAR NOT NULL,
       tipo VARCHAR NOT NULL,
       marca VARCHAR NOT NULL,
-      modelo VARCHAR NOT NULL
+      modelo VARCHAR NOT NULL,
+      CONSTRAINT equipamento_projeto_FK FOREIGN KEY (projeto_id) REFERENCES projetos(id) ON DELETE CASCADE ON UPDATE CASCADE
     );
     ",
     
@@ -120,9 +152,6 @@ create_bd <- function(con) {
     );
     "
   )
-  
-  glue::glue("DROP TABLE IF EXISTS {names(query_list)} CASCADE;") %>% 
-    purrr::map(~DBI::dbGetQuery(con, .x))
   
   query_list %>% purrr::map(~DBI::dbGetQuery(con, .x))
   

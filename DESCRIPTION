@@ -19,7 +19,6 @@ Imports:
     purrr,
     reactable,
     RPostgreSQL,
-    RSQLite,
     shiny (>= 1.7.0),
     shinyalert,
     shinydashboard,

@@ -25,10 +25,7 @@ mod_cadastro_locais_server <- function(id, user){
     # Index -----------------------------------------------------------------
     output$index <- renderUI({
       
-      vct_projetos <- c("Nenhum projeto disponível" = 0)
-      if (nrow(user$info_projeto) > 0) {
-        vct_projetos <- user$info_projeto$id %>% setNames(user$info_projeto$nome)
-      }
+      dados$locais <- get_locais(user$pool, user$info_projeto_sel$id)
       
       vct_tipos <- c("Marcação" = 'marcacao', "Base fixa" = 'base_fixa', "Soltura" = 'soltura', "Outro" = 'outro')
       
@@ -46,11 +43,6 @@ mod_cadastro_locais_server <- function(id, user){
           
           tags$fieldset(
             class = 'input_box',
-            tags$legend("Associar projeto"),
-            selectInput(ns('projeto'), "Projeto", multiple = TRUE,  choices = vct_projetos)          ),
-          
-          tags$fieldset(
-            class = 'input_box',
             tags$legend("Localização"),
             textInput(ns('latitude'), "", placeholder = "Latitude"),
             textInput(ns('longitude'), "", placeholder = "Longitude"),
@@ -59,8 +51,8 @@ mod_cadastro_locais_server <- function(id, user){
           
           tags$div(
             class = 'display_flex_row',
-            hidden(actionButton(ns('deletar'), "Deletar", icon = icon('trash-alt'))),
-            actionButton(ns('salvar'), "Salvar", icon = icon('save'))
+            hidden(actionButton(ns('deletar'), "Deletar", icon = icon('trash-can'))),
+            actionButton(ns('salvar'), "Salvar", icon = icon('floppy-disk'))
           ),
         ),
         
@@ -74,7 +66,7 @@ mod_cadastro_locais_server <- function(id, user){
           tags$fieldset(
             class = 'input_box',
             tags$legend("Localização dos locais cadastrados"),
-            leafletOutput(ns('mapa_principal'))
+            leafletOutput(ns('mapa_principal'), height = 500)
           )
         )
       )
@@ -84,7 +76,7 @@ mod_cadastro_locais_server <- function(id, user){
     # Render | tbl ---------------------------------------------------------------
     output$tbl <- renderReactable({
       
-      user$info_projeto %>% 
+      dados$locais %>% 
         reactable::reactable(
           onClick = "select", 
           selection = "single", 
@@ -92,24 +84,61 @@ mod_cadastro_locais_server <- function(id, user){
           highlight = TRUE,
           outlined  =  TRUE,
           pagination = TRUE,
-          height = 300,
+          height = 200,
           resizable = TRUE,
           showPageSizeOptions = TRUE,
           columns = list(
             nome = colDef(html = TRUE, minWidth = 100, maxWidth = 250, name = "Nome", align = "left"),
-            sigla =  colDef(minWidth = 100, maxWidth = 250, name = "Sigla", align = "center"),
-            cidade =  colDef(minWidth = 100, maxWidth = 250, name = "Cidade", align = "center"),
-            estado =  colDef(minWidth = 100, maxWidth = 250, name = "UF", align = "center"),
+            tipo =  colDef(minWidth = 100, maxWidth = 250, name = "Tipo do local", align = "center"),
             lat =  colDef(minWidth = 100, maxWidth = 250, name = "Latitude", align = "center"),
             lon =  colDef(minWidth = 100, maxWidth = 250, name = "Longitude", align = "center"),
             .selection = colDef(show = FALSE),
-            id = colDef(show = FALSE)
+            id = colDef(show = FALSE),
+            projeto_id = colDef(show = FALSE)
           )
         )
     })
     
     # Observe | tbl__reactable__selected -------------------------------------
     observeEvent(input$tbl__reactable__selected, {
+      
+      if (!is.null(input$tbl__reactable__selected)) {
+        
+        aux <- 
+          dados$locais %>% slice(input$tbl__reactable__selected)
+        
+        if (nrow(aux) != 0) {
+          
+          dados$id_clicado <- aux$id
+          updateTextInput(inputId = "nome", value = aux$nome)
+          updateSelectInput(inputId = "tipo", selected = aux$tipo)
+          updateTextInput(inputId = "latitude", value = aux$lat)
+          updateTextInput(inputId = "longitude", value = aux$lon)
+          updateActionButton(inputId = 'salvar', label = "Salvar alterações")
+          show('deletar')
+          
+          leafletProxy('mapa_principal') %>% 
+            addAwesomeMarkers(
+              layerId = 'projeto_clicado', 
+              lng = as.numeric(aux$lon), 
+              lat = as.numeric(aux$lat), 
+              icon = icons("red"), 
+              group = 'projetos'
+            )
+          
+        }
+        
+      } else {
+        
+        dados$id_clicado <- NULL
+        updateTextInput(inputId = "nome", value = "")
+        updateTextInput(inputId = "latitude", value = "")
+        updateTextInput(inputId = "longitude", value = "")
+        updateActionButton(inputId = 'salvar', label = "Salvar")
+        hide('deletar')
+        leafletProxy('mapa_principal') %>% 
+          removeMarker('projeto_clicado')
+      }
       
     }, ignoreNULL = FALSE)
     
@@ -119,21 +148,23 @@ mod_cadastro_locais_server <- function(id, user){
       
       lng_tbl <- -52
       lat_tbl <- -15
+      label <- "geral"
       
       lat <- user$info_projeto_sel$lat
       lng <- user$info_projeto_sel$lon
+  
       
-      if (nrow(user$info_projeto) > 0) {
+      if (nrow(dados$locais) > 0) {
         
-        lng_tbl <- as.numeric(user$info_projeto$lon)
-        lat_tbl <- as.numeric(user$info_projeto$lat)
-        label <- user$info_projeto$sigla
+        lng_tbl <- as.numeric(dados$locais$lon)
+        lat_tbl <- as.numeric(dados$locais$lat)
+        label <- dados$locais$nome
         
       }
       
       
       leaflet::leaflet() %>%
-        leaflet::setView(lng = lng, lat = lat, zoom = 8) %>% 
+        leaflet::setView(lng = lng, lat = lat, zoom = 12) %>% 
         addTiles(group = "Open Streat Map") %>%
         addProviderTiles(providers$CartoDB.DarkMatter, group = "Escuro") %>%
         addProviderTiles(providers$Esri.WorldImagery, group = "Satelite") %>% 
@@ -180,6 +211,92 @@ mod_cadastro_locais_server <- function(id, user){
       shinyjs::reset('longitude')
       
     })
+    
+    
+    
+    # Controle | feedback ----------------------------------------------------
+    observeEvent(input$nome, {if (input$nome != "") {campo_obrigatorio_feedback("nome", FALSE)}}, ignoreNULL = TRUE)
+    observeEvent(input$latitude, {if (input$latitude != "") {campo_obrigatorio_feedback("latitude", FALSE)}}, ignoreNULL = TRUE)
+    observeEvent(input$longitude, {if (input$longitude != "") {campo_obrigatorio_feedback("longitude", FALSE)}}, ignoreNULL = TRUE)
+    
+    
+    
+    # Observe | salvar -------------------------------------------------------
+    observeEvent(input$salvar, {
+      
+      nome <- TRUE
+      latitude <- TRUE 
+      longitude <- TRUE
+      
+      
+      if (input$nome == "") {nome <- FALSE; campo_obrigatorio_feedback("nome", TRUE)}
+      if (input$latitude == "") {latitude <- FALSE; campo_obrigatorio_feedback("latitude", TRUE)}
+      if (input$longitude == "") {longitude <- FALSE; campo_obrigatorio_feedback("longitude", TRUE)}
+      
+      
+      if (all(c(nome, latitude, longitude))) {
+
+        tabela <- data.frame(
+          id = NA,
+          projeto_id = user$info_projeto_sel$id,
+          nome = input$nome, 
+          tipo = input$tipo,
+          lat = input$latitude, 
+          lon = input$longitude
+        ) %>%  mutate(id = dados$id_clicado)
+        
+        tryCatch({
+          
+          conn <- poolCheckout(user$pool)
+          
+          if (is.null(dados$id_clicado)) {
+            
+            dbx::dbxInsert(conn, 'locais', tabela)
+            
+          } else {
+            
+            dbx::dbxUpdate(conn, 'locais', tabela, where_cols = 'id')
+            
+          }
+          
+          shinyjs::reset("nome")
+          shinyjs::reset("latitude")
+          shinyjs::reset("longitude")
+          
+          dados$locais <- get_locais(user$pool,  user$info_projeto_sel$id)
+          
+          shinyalert::shinyalert("Local salvo!", type = "success")
+          poolReturn(conn)
+          
+        }, error = function(e) {shinyalert::shinyalert(type = 'error', title = "Erro ao salvar local", text = paste0(e))})
+        
+      }
+      
+    })
+    
+    # Observe | deletar ------------------------------------------------------
+    observeEvent(input$deletar, {
+      
+      tryCatch({
+        
+        conn <- poolCheckout(user$pool)
+        
+        dbx::dbxDelete(conn, 'locais', where = data.frame(id = dados$id_clicado))
+        dados$locais <- get_locais(user$pool, user$info_projeto_sel$id) 
+        
+        poolReturn(conn)
+        
+        shinyalert::shinyalert(type = 'success', title = "Local deletado")
+        
+        
+      }, error = function(e) {
+        shinyalert::shinyalert(type = 'error', title = "Erro ao deletar locais", text = paste0(e))
+      })
+      
+      
+    })
+    
+    
     
     
     

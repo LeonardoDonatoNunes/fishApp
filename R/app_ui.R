@@ -17,14 +17,14 @@ app_ui <- function(request) {
         ),
       dashboardSidebar(
         sidebarMenu(
-          menuItem("Cadastro", icon = icon('tasks'), startExpanded = TRUE,
-                   menuSubItem("Projetos", tabName = 'cadastro_projetos'),
-                   menuSubItem("Pessoas", tabName = 'cadastro_pessoas'),
-                   menuSubItem("Locais", tabName = 'cadastro_locais'),
-                   menuSubItem("Equipamentos", tabName = 'cadastro_equipamentos'),
-                   menuSubItem("Bases", tabName = 'cadastro_bases'),
-                   menuSubItem("Espécies", tabName = 'cadastro_especies'),
-                   menuSubItem("Peixes", tabName = 'cadastro_peixes')
+          menuItem("Cadastro", icon = icon('list-check'), startExpanded = TRUE,
+                   menuSubItem("Projetos", tabName = 'cadastro_projetos', icon = icon('angles-right')),
+                   menuSubItem("Pessoas", tabName = 'cadastro_pessoas', icon = icon('angles-right')),
+                   menuSubItem("Locais", tabName = 'cadastro_locais', icon = icon('angles-right')),
+                   menuSubItem("Equipamentos", tabName = 'cadastro_equipamentos', icon = icon('angles-right')),
+                   menuSubItem("Bases", tabName = 'cadastro_bases', icon = icon('angles-right')),
+                   menuSubItem("Espécies", tabName = 'cadastro_especies', icon = icon('angles-right')),
+                   menuSubItem("Peixes", tabName = 'cadastro_peixes', icon = icon('angles-right'))
                    
           )
         )

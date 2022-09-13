@@ -51,8 +51,8 @@ mod_cadastro_projetos_server <- function(id, user){
           ),
           tags$div(
             class = 'display_flex_row',
-            hidden(actionButton(ns('deletar'), "Deletar", icon = icon('trash-alt'))),
-            actionButton(ns('salvar'), "Salvar", icon = icon('save'))
+            hidden(actionButton(ns('deletar'), "Deletar", icon = icon('trash-can'))),
+            actionButton(ns('salvar'), "Salvar", icon = icon('floppy-disk'))
           ),
         ),
         column(
@@ -265,19 +265,19 @@ mod_cadastro_projetos_server <- function(id, user){
         
         tryCatch({
           
+          conn <- poolCheckout(user$pool)
+          
           if (is.null(dados$id_clicado)) {
             
-            dbx::dbxInsert(user$con, 'projetos', tabela)
+            dbx::dbxInsert(conn, 'projetos', tabela)
             
           } else {
             
-            dbx::dbxUpdate(user$con, 'projetos', tabela, where_cols = 'id')
+            dbx::dbxUpdate(conn, 'projetos', tabela, where_cols = 'id')
             
           }
           
-          dbxSelect(user$con, 'select * from projetos')
-          
-          user$info_projeto <- get_projetos(user$con) 
+          user$info_projeto <- get_projetos(user$pool) 
           
           shinyjs::reset("nome")
           shinyjs::reset("sigla")
@@ -288,6 +288,7 @@ mod_cadastro_projetos_server <- function(id, user){
           shinyjs::reset("longitude")
           
           shinyalert::shinyalert("Projeto salvo!", type = "success")
+          poolReturn(conn)
           
         }, error = function(e) {shinyalert::shinyalert(type = 'error', title = "Erro ao salvar projetos", text = paste0(e))})
         
@@ -300,8 +301,13 @@ mod_cadastro_projetos_server <- function(id, user){
       
       tryCatch({
         
-        dbx::dbxDelete(user$con, 'projetos', where = data.frame(id = dados$id_clicado))
-        user$info_projeto <- get_projetos(user$con) 
+        conn <- poolCheckout(user$pool)
+        
+        dbx::dbxDelete(conn, 'projetos', where = data.frame(id = dados$id_clicado))
+        user$info_projeto <- get_projetos(user$pool) 
+        
+        poolReturn(conn)
+        
         shinyalert::shinyalert(type = 'success', title = "Projeto deletado")
         
         

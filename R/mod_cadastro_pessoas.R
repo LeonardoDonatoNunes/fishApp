@@ -51,8 +51,8 @@ mod_cadastro_pessoas_server <- function(id, user){
           ),
           tags$div(
             class = 'display_flex_row',
-            hidden(actionButton(ns('deletar'), "Deletar", icon = icon('trash-alt'))),
-            actionButton(ns('salvar'), "Salvar", icon = icon('save'))
+            hidden(actionButton(ns('deletar'), "Deletar", icon = icon('trash-can'))),
+            actionButton(ns('salvar'), "Salvar", icon = icon('floppy-disk'))
           )
           
         ),
@@ -74,7 +74,7 @@ mod_cadastro_pessoas_server <- function(id, user){
       input$salvar
       dados$pessoa_sel <- NULL
       
-      dados$pessoas <- get_pessoas_projetos(user$con)
+      dados$pessoas <- get_pessoas_projetos(user$pool)
       
       dados$tbl_reactable <-
         dados$pessoas %>% 
@@ -159,29 +159,35 @@ mod_cadastro_pessoas_server <- function(id, user){
       
       tryCatch({
         
+        conn <- poolCheckout(user$pool)
+        
         if (is.null(dados$pessoa_sel)) { 
           
-          pessoa_id <- dbx::dbxInsert(user$con, 'pessoas', tabela, returning = 'id')
+          pessoa_id <- dbx::dbxInsert(conn, 'pessoas', tabela, returning = 'id')
           pessoa_projeto <- data.frame(pessoa_id = as.numeric(pessoa_id), projeto_id = input$projeto)
           
           dbx::dbxUpsert(
-            con = user$con, 
+            con = conn, 
             table = 'pessoa_projeto', 
             records = pessoa_projeto,
             where_cols = c('pessoa_id', 'projeto_id'))
           
         } else {
           
-          dbx::dbxUpdate(user$con, 'pessoas', tabela, where_cols = 'id')
+          dbx::dbxUpdate(conn, 'pessoas', tabela, where_cols = 'id')
           pessoa_projeto <-  data.frame(pessoa_id = dados$pessoa_sel, projeto_id = input$projeto)
             
           dbx::dbxUpsert(
-            con = user$con, 
+            con = conn, 
             table = 'pessoa_projeto', 
             records = pessoa_projeto,
             where_cols = c('pessoa_id', 'projeto_id'))
           
         }
+        
+        shinyalert::shinyalert(type = 'success', title = paste0("Sucesso ao adicionar!"), text = paste0(input$nome, " foi adicionado(a)"))
+        
+        poolReturn(conn)
         
       }, error = function(e) {shinyalert::shinyalert(type = 'error', title = "Erro ao salvar pessoa", text = paste0(e))})
       
@@ -194,8 +200,11 @@ mod_cadastro_pessoas_server <- function(id, user){
       
       tryCatch({
         
-        dbx::dbxDelete(conn = user$con, 'pessoas', where = data.frame(id = dados$pessoa_sel))
+        conn <- poolCheckout(user$pool)
+        
+        dbx::dbxDelete(conn = user$pool, 'pessoas', where = data.frame(id = dados$pessoa_sel))
         shinyalert::shinyalert(title = "Pessoa excluída", type = 'success')
+        poolReturn(conn)
         
       }, error = function(e) {shinyalert::shinyalert(type = 'error', title = "Erro ao deletar pessoa", text = paste0(e))})
   
