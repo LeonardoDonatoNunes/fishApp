@@ -127,7 +127,7 @@ mod_cadastro_bases_server <- function(id, user){
             column(
               width = 8,
               leafletOutput(ns('mapa'), height = '400px'),
-              reactableOutput(ns('tbl_locais'), height = '200px'),
+              reactableOutput(ns('tbl_tipos'), height = '200px'),
               textOutput(ns('click_data'))
             )
             
@@ -227,8 +227,8 @@ mod_cadastro_bases_server <- function(id, user){
       
     })
     
-    # Render | tbl_locais ----------------------------------------------------
-    output$tbl_locais <- renderReactable({
+    # Render | tbl_tipos ----------------------------------------------------
+    output$tbl_tipos <- renderReactable({
       dados$locais %>% 
         reactable::reactable(
           onClick = "select", 

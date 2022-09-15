@@ -51,7 +51,7 @@ mod_cadastro_locais_server <- function(id, user){
             textInput(ns('nome'), "", placeholder = "Nome do local"),
             textInput(ns('descricao'), "", placeholder = "Descrição do local"),
             selectInput(ns('tipo'), "Tipo do local", choices = vct_tipos),
-            actionLink(ns('novo_tipo_local'), "Adicionar tipo de local", icon = icon("circle-plus"))
+            actionLink(ns('novo_tipo'), "Adicionar tipo de local", icon = icon("circle-plus"))
             
           ),
           
@@ -244,7 +244,7 @@ mod_cadastro_locais_server <- function(id, user){
         
         if (input$nome %in% dados$locais$nome) {
           
-          shinyFeedback::feedbackDanger('nome', text = "Local existente", show = TRUE)
+          shinyFeedback::feedbackDanger('nome', text = "Local existente, não será possível salvar", show = TRUE)
           dados$teste_nome <- FALSE
           
         } else {
@@ -341,8 +341,8 @@ mod_cadastro_locais_server <- function(id, user){
     
     
     
-    # Observe | novo_tipo_local ----------------------------------------------
-    observeEvent(input$novo_tipo_local, {
+    # Observe | novo_tipo ----------------------------------------------
+    observeEvent(input$novo_tipo, {
       showModal(
         modalDialog(
           title = "Novo tipo de local",
@@ -358,15 +358,15 @@ mod_cadastro_locais_server <- function(id, user){
                    textInput(ns('nome_tipo'), "", placeholder = "Nome do tipo"),
                    textInput(ns('descricao_tipo'), "", placeholder = "Descrição")
             ),
-            column(8, reactableOutput(ns('tbl_locais'))
+            column(8, reactableOutput(ns('tbl_tipos'))
             )
           )
         )
       )
     })
     
-    # Render | tbl_locais ------------------------------------------------
-    output$tbl_locais <-  renderReactable({
+    # Render | tbl_tipos ------------------------------------------------
+    output$tbl_tipos <-  renderReactable({
       
       altura <- 'auto'
       if (nrow(dados$tipo_local) > 3) {
@@ -389,14 +389,14 @@ mod_cadastro_locais_server <- function(id, user){
         )
     })
     
-    # Observe |  tbl_locais__reactable__selected --------------------------
-    observeEvent(input$tbl_locais__reactable__selected, {
+    # Observe |  tbl_tipos__reactable__selected --------------------------
+    observeEvent(input$tbl_tipos__reactable__selected, {
       
-      if (!is.null(input$tbl_locais__reactable__selected)) {
+      if (!is.null(input$tbl_tipos__reactable__selected)) {
         
         aux <-
           dados$tipo_local %>% 
-          slice(input$tbl_locais__reactable__selected)
+          slice(input$tbl_tipos__reactable__selected)
         
         dados$tipo_local_id_sel <- aux$id
         
@@ -425,7 +425,7 @@ mod_cadastro_locais_server <- function(id, user){
         
         if (input$nome_tipo %in% dados$tipo_local$nome) {
           
-          shinyFeedback::feedbackDanger('nome_tipo', text = "Tipo de local existente", show = TRUE)
+          shinyFeedback::feedbackDanger('nome_tipo', text = "Tipo de local existente, não será possível salvar", show = TRUE)
           dados$teste_nome_tipo <- FALSE
           
         } else {

@@ -177,6 +177,28 @@ get_locais <- function(con, projeto_id) {
   
 }
 
+#' Buscar get_tipo_equipamento
+#'
+#' @param con 
+#'
+#' @return data_frame
+#' @export
+#'
+#' @examples get_tipo_equipamento(con)
+get_tipo_equipamento <- function(con) {
+  
+  conn <- poolCheckout(con)
+  
+  query <- "select * from tipo_equipamento"
+  
+  query_return <- DBI::dbGetQuery(conn, query)
+  
+  poolReturn(conn)
+  return(query_return)
+  
+}
+
+
 #' Buscar equipamentos
 #'
 #' @param con 
@@ -190,9 +212,10 @@ get_equipamentos <- function(con, projeto_id) {
   conn <- poolCheckout(con)
   
   query <- glue::glue("
-  select *
-  from equipamentos 
-  where projeto_id = {projeto_id}
+    select e.*, te.nome as tipo_nome
+    from equipamentos e
+    left join tipo_equipamento te on e.tipo_id = te.id
+    where e.projeto_id = {projeto_id}
   ")
   
   query_return <- DBI::dbGetQuery(conn, query)

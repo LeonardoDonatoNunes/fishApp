@@ -39,15 +39,23 @@ create_fishApp_tables <- function(con) {
     );
     ",
     
+    tipo_equipamento = "
+    CREATE TABLE  tipo_equipamento (
+      id SERIAL PRIMARY KEY,
+      nome VARCHAR NOT NULL,
+      descricao VARCHAR NOT NULL
+    );",
+    
     equipamentos = "
     CREATE TABLE  equipamentos (
       id SERIAL PRIMARY KEY,
       projeto_id INTEGER NOT NULL,
       numero_serie VARCHAR NOT NULL,
-      tipo VARCHAR NOT NULL,
+      tipo_id INTEGER NOT NULL,
       marca VARCHAR NOT NULL,
       modelo VARCHAR NOT NULL,
-      CONSTRAINT equipamento_projeto_FK FOREIGN KEY (projeto_id) REFERENCES projetos(id) ON DELETE CASCADE ON UPDATE CASCADE
+      CONSTRAINT equipamento_projeto_pkey FOREIGN KEY (projeto_id) REFERENCES projetos(id) ON DELETE CASCADE ON UPDATE CASCADE,
+      CONSTRAINT equipamento_tipo_pkey FOREIGN KEY (tipo_id) REFERENCES tipo_equipamento(id) ON DELETE CASCADE ON UPDATE CASCADE
     );
     ",
     
