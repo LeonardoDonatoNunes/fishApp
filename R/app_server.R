@@ -25,16 +25,18 @@ app_server <- function( input, output, session ) {
   
   output$dropdown_upmenu_ui <- renderUI({
     
-    user$pool <- dbPool(
-      drv = dbDriver("PostgreSQL"),
-      host = "localhost",
-      user = "postgres",
-      password = "postgres",
-      port = 5432
-    )
     
-    if (!DBI::dbExistsTable(user$pool, "projetos")) {
-      create_bd(user$pool)
+    if (teste_existencia_bd()) {
+      
+      user$pool <- pool_fishApp_bd()
+      
+    } else {
+      
+      conn <- pool_generic_bd()
+      create_fishApp_bd(conn)
+      user$pool <- pool_fishApp_bd()
+      create_fishApp_tables(user$pool)
+      
     }
     
     user$info_projeto <- get_projetos(user$pool)
@@ -128,6 +130,27 @@ get_pessoas_projetos <- function(con) {
   
 }
 
+#' Buscar tipo_local
+#'
+#' @param con 
+#'
+#' @return data_frame
+#' @export
+#'
+#' @examples get_tipo_local(con)
+get_tipo_local <- function(con) {
+  
+  conn <- poolCheckout(con)
+  
+  query <- "select * from tipo_local"
+  
+  query_return <- DBI::dbGetQuery(conn, query)
+  
+  poolReturn(conn)
+  return(query_return)
+  
+}
+
 #' Buscar locais
 #'
 #' @param con 
@@ -141,8 +164,9 @@ get_locais <- function(con, projeto_id) {
   conn <- poolCheckout(con)
   
   query <- glue::glue("
-  select *
-  from locais 
+  select l.*, tl.nome as tipo_nome
+  from locais l
+  left join tipo_local tl on l.tipo_id = tl.id
   where projeto_id = {projeto_id}
   ")
   

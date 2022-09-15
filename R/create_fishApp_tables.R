@@ -1,42 +1,12 @@
-#' Cria o banco de dados
+#' Cria as tabelas do banco de dados
 #'
 #' @param con 
 #'
-#' @return data base created
+#' @return tables
 #' @export
 #'
-#' @examples create_bd(con)
-create_bd <- function(con) {
-  
-  DBI::dbGetQuery(
-    con,
-    "DROP DATABASE IF EXISTS fishApp;"
-  )
-  
-  DBI::dbGetQuery(
-    con,
-    "CREATE DATABASE fishApp
-    WITH
-    OWNER = postgres
-    ENCODING = 'UTF8'
-    LC_COLLATE = 'Portuguese_Brazil.1252'
-    LC_CTYPE = 'Portuguese_Brazil.1252'
-    TABLESPACE = pg_default
-    CONNECTION LIMIT = -1
-    IS_TEMPLATE = False;
-    "
-  )
-  
-  
-  
-  DBI::dbGetQuery(
-    con,
-    "
-    COMMENT ON DATABASE fishApp
-    IS 'Banco de dados da aplica??o fishApp';
-    "
-  )
-  
+#' @examples create_fishApp_tables(con)
+create_fishApp_tables <- function(con) {
   
   query_list <- list(
     
@@ -54,7 +24,7 @@ create_bd <- function(con) {
     ",
     
     pessoas = "
-    CREATE TABLE pessoas (
+    CREATE TABLE  pessoas (
       id SERIAL PRIMARY KEY,
       nome VARCHAR NOT NULL,
       cargo VARCHAR NOT NULL
@@ -62,7 +32,7 @@ create_bd <- function(con) {
     ",
     
     pessoa_projeto = "
-    CREATE TABLE pessoa_projeto (
+    CREATE TABLE  pessoa_projeto (
       pessoa_id int REFERENCES pessoas (id) ON UPDATE CASCADE ON DELETE CASCADE,
       projeto_id int REFERENCES projetos (id) ON UPDATE CASCADE ON DELETE CASCADE,
       CONSTRAINT pessoa_projeto_pkey PRIMARY KEY (pessoa_id, projeto_id)
@@ -70,7 +40,7 @@ create_bd <- function(con) {
     ",
     
     equipamentos = "
-    CREATE TABLE equipamentos (
+    CREATE TABLE  equipamentos (
       id SERIAL PRIMARY KEY,
       projeto_id INTEGER NOT NULL,
       numero_serie VARCHAR NOT NULL,
@@ -81,20 +51,30 @@ create_bd <- function(con) {
     );
     ",
     
+    tipo_local = "
+    CREATE TABLE  tipo_local (
+      id SERIAL PRIMARY KEY,
+      nome VARCHAR NOT NULL,
+      descricao VARCHAR NOT NULL
+    );",
+    
     locais = "
-    CREATE TABLE locais (
+    CREATE TABLE  locais (
       id SERIAL PRIMARY KEY,
       projeto_id INTEGER NOT NULL, 
       nome VARCHAR NOT NULL,
-      tipo VARCHAR NOT NULL,
+      descricao VARCHAR NOT NULL,
+      tipo_id INTEGER NOT NULL,
       lat DOUBLE PRECISION NOT NULL,
       lon DOUBLE PRECISION NOT NULL,
-      CONSTRAINT locais_projeto_FK FOREIGN KEY (projeto_id) REFERENCES projetos(id) ON DELETE CASCADE ON UPDATE CASCADE
+      CONSTRAINT locais_projeto_pkey FOREIGN KEY (projeto_id) REFERENCES projetos(id) ON DELETE CASCADE ON UPDATE CASCADE,
+      CONSTRAINT local_tipo_pkey FOREIGN KEY (tipo_id) REFERENCES tipo_local(id) ON DELETE CASCADE ON UPDATE CASCADE
+
     );
     ",
     
     peixes = "
-    CREATE TABLE peixes (
+    CREATE TABLE  peixes (
       id SERIAL PRIMARY KEY,
       especie VARCHAR NOT NULL,
       nome_comum VARCHAR,
@@ -104,7 +84,7 @@ create_bd <- function(con) {
     ",
     
     marcacao = "
-    CREATE TABLE marcacao (
+    CREATE TABLE  marcacao (
       id SERIAL PRIMARY KEY,
       pessoa_id INTEGER NOT NULL,
       peixe_id INTEGER NOT NULL,
@@ -129,7 +109,7 @@ create_bd <- function(con) {
     ",
     
     bases_fixas = "
-    CREATE TABLE bases_fixas (
+    CREATE TABLE  bases_fixas (
       id SERIAL PRIMARY KEY,
       projeto_id INTEGER NOT NULL,
       nome_base VARCHAR NOT NULL,
@@ -144,7 +124,7 @@ create_bd <- function(con) {
     ",
     
     base_equipamento = "
-    CREATE TABLE base_equipamento (
+    CREATE TABLE  base_equipamento (
       base_id INTEGER NOT NULL,
       equipamento_id INTEGER NOT NULL,
       CONSTRAINT base_equipamento_FK FOREIGN KEY (base_id) REFERENCES bases_fixas(id) ON DELETE CASCADE ON UPDATE CASCADE,
