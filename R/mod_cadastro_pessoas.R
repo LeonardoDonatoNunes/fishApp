@@ -67,7 +67,7 @@ mod_cadastro_pessoas_server <- function(id, user){
       )
     })
     
-    
+    # Render | tbl ----------------------------------------------------------
     output$tbl <- renderReactable({
       
       input$deletar
@@ -105,7 +105,7 @@ mod_cadastro_pessoas_server <- function(id, user){
       
     })
     
-    # Observe | -------------------------------------------------
+    # Observe | tbl_selected -------------------------------------------------
     observeEvent(input$tbl__reactable__selected, {
       
       if (!is.null(input$tbl__reactable__selected)) {
@@ -136,6 +136,7 @@ mod_cadastro_pessoas_server <- function(id, user){
     }, ignoreNULL = FALSE)
     
     
+    # Observe | todos --------------------------------------------------------
     observeEvent(input$todos, {
       
       if (input$todos) {
@@ -147,50 +148,82 @@ mod_cadastro_pessoas_server <- function(id, user){
       
     })
     
-    # Observe | salvar ------------------------------------------------------
-    observeEvent(input$salvar, {
+    # Controle | feedback ---------------------------------------------------
+    observeEvent(input$nome, {
       
-      tabela <- data.frame(
-        id = NA,
-        nome = input$nome,
-        cargo = input$cargo
-      ) %>% 
-        mutate(id = dados$pessoa_sel)
+      if (input$nome != '') {campo_obrigatorio_feedback('nome', FALSE)}
       
-      tryCatch({
+      dados$teste_nome <- TRUE
+      
+      if (is.null(dados$pessoa_sel)) {
         
-        conn <- poolCheckout(user$pool)
-        
-        if (is.null(dados$pessoa_sel)) { 
+        if (input$nome %in% dados$pessoas$nome) {
           
-          pessoa_id <- dbx::dbxInsert(conn, 'pessoas', tabela, returning = 'id')
-          pessoa_projeto <- data.frame(pessoa_id = as.numeric(pessoa_id), projeto_id = input$projeto)
-          
-          dbx::dbxUpsert(
-            con = conn, 
-            table = 'pessoa_projeto', 
-            records = pessoa_projeto,
-            where_cols = c('pessoa_id', 'projeto_id'))
+          shinyFeedback::feedbackDanger('nome', text = "Nome existente, não será possível salvar", show = TRUE)
+          dados$teste_nome <- FALSE
           
         } else {
           
-          dbx::dbxUpdate(conn, 'pessoas', tabela, where_cols = 'id')
-          pessoa_projeto <-  data.frame(pessoa_id = dados$pessoa_sel, projeto_id = input$projeto)
-            
-          dbx::dbxUpsert(
-            con = conn, 
-            table = 'pessoa_projeto', 
-            records = pessoa_projeto,
-            where_cols = c('pessoa_id', 'projeto_id'))
+          shinyFeedback::feedbackDanger('nome', show = FALSE)
           
         }
         
-        shinyalert::shinyalert(type = 'success', title = paste0("Sucesso ao adicionar!"), text = paste0(input$nome, " foi adicionado(a)"))
-        
-        poolReturn(conn)
-        
-      }, error = function(e) {shinyalert::shinyalert(type = 'error', title = "Erro ao salvar pessoa", text = paste0(e))})
+      }
       
+    })
+    
+    
+    # Observe | salvar ------------------------------------------------------
+    observeEvent(input$salvar, {
+      
+      nome <- TRUE
+      if (input$nome == "") {nome <- FALSE; campo_obrigatorio_feedback("nome", TRUE)}
+      
+      
+      if (all(nome, dados$teste_nome)) {
+        
+        tabela <- data.frame(
+          id = NA,
+          nome = input$nome,
+          cargo = input$cargo
+        ) %>% 
+          mutate(id = dados$pessoa_sel)
+        
+        tryCatch({
+          
+          conn <- poolCheckout(user$pool)
+          
+          if (is.null(dados$pessoa_sel)) { 
+            
+            pessoa_id <- dbx::dbxInsert(conn, 'pessoas', tabela, returning = 'id')
+            pessoa_projeto <- data.frame(pessoa_id = as.numeric(pessoa_id), projeto_id = input$projeto)
+            
+            dbx::dbxUpsert(
+              con = conn, 
+              table = 'pessoa_projeto', 
+              records = pessoa_projeto,
+              where_cols = c('pessoa_id', 'projeto_id'))
+            
+          } else {
+            
+            dbx::dbxUpdate(conn, 'pessoas', tabela, where_cols = 'id')
+            pessoa_projeto <-  data.frame(pessoa_id = dados$pessoa_sel, projeto_id = input$projeto)
+            
+            dbx::dbxUpsert(
+              con = conn, 
+              table = 'pessoa_projeto', 
+              records = pessoa_projeto,
+              where_cols = c('pessoa_id', 'projeto_id'))
+            
+          }
+          
+          shinyalert::shinyalert(type = 'success', title = paste0("Sucesso ao adicionar!"), text = paste0(input$nome, " foi adicionado(a)"))
+          
+          poolReturn(conn)
+          
+        }, error = function(e) {shinyalert::shinyalert(type = 'error', title = "Erro ao salvar pessoa", text = paste0(e))})
+        
+      }
       
     })
     
@@ -207,7 +240,7 @@ mod_cadastro_pessoas_server <- function(id, user){
         poolReturn(conn)
         
       }, error = function(e) {shinyalert::shinyalert(type = 'error', title = "Erro ao deletar pessoa", text = paste0(e))})
-  
+      
       
     })
     

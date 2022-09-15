@@ -109,7 +109,7 @@ mod_cadastro_projetos_server <- function(id, user){
         
         if (nrow(aux) != 0) {
           
-          dados$id_clicado <- aux$id
+          dados$projeto_id_sel <- aux$id
           updateTextInput(inputId = "nome", value = aux$nome)
           updateTextInput(inputId = "sigla", value = aux$sigla)
           updateTextInput(inputId = "cidade", value = aux$cidade)
@@ -133,7 +133,7 @@ mod_cadastro_projetos_server <- function(id, user){
         
       } else {
         
-        dados$id_clicado <- NULL
+        dados$projeto_id_sel <- NULL
         updateTextInput(inputId = "nome", value = "")
         updateTextInput(inputId = "sigla", value = "")
         updateTextInput(inputId = "cidade", value = "")
@@ -219,7 +219,29 @@ mod_cadastro_projetos_server <- function(id, user){
     
     
     # Controle | feedback ----------------------------------------------------
-    observeEvent(input$nome, {if (input$nome != "") {campo_obrigatorio_feedback("nome", FALSE)}}, ignoreNULL = TRUE)
+    observeEvent(input$nome, {
+      
+      if (input$nome != '') {campo_obrigatorio_feedback('nome', FALSE)}
+      
+      dados$teste_nome <- TRUE
+      
+      if (is.null(dados$projeto_id_sel)) {
+        
+        if (input$nome %in% user$info_projeto$nome) {
+          
+          shinyFeedback::feedbackDanger('nome', text = "Projeto existente, não será possível salvar", show = TRUE)
+          dados$teste_nome <- FALSE
+          
+        } else {
+          
+          shinyFeedback::feedbackDanger('nome', show = FALSE)
+          
+        }
+        
+      }
+      
+    })
+    
     observeEvent(input$sigla, {if (input$sigla != "") {campo_obrigatorio_feedback("sigla", FALSE)}}, ignoreNULL = TRUE)
     observeEvent(input$cidade, {if (input$cidade != "") {campo_obrigatorio_feedback("cidade", FALSE)}}, ignoreNULL = TRUE)
     observeEvent(input$estado, {if (input$estado != "") {campo_obrigatorio_feedback("estado", FALSE)}}, ignoreNULL = TRUE)
@@ -249,7 +271,7 @@ mod_cadastro_projetos_server <- function(id, user){
       if (input$longitude == "") {longitude <- FALSE; campo_obrigatorio_feedback("longitude", TRUE)}
       
       
-      if (all(c(nome, sigla, cidade, estado, pais, latitude, longitude))) {
+      if (all(c(nome, sigla, cidade, estado, pais, latitude, longitude, dados$teste_nome))) {
         
         
         tabela <- data.frame(
@@ -261,13 +283,13 @@ mod_cadastro_projetos_server <- function(id, user){
           pais = input$pais,
           lat = input$latitude, 
           lon = input$longitude
-        ) %>%  mutate(id = dados$id_clicado)
+        ) %>%  mutate(id = dados$projeto_id_sel)
         
         tryCatch({
           
           conn <- poolCheckout(user$pool)
           
-          if (is.null(dados$id_clicado)) {
+          if (is.null(dados$projeto_id_sel)) {
             
             dbx::dbxInsert(conn, 'projetos', tabela)
             
@@ -303,7 +325,7 @@ mod_cadastro_projetos_server <- function(id, user){
         
         conn <- poolCheckout(user$pool)
         
-        dbx::dbxDelete(conn, 'projetos', where = data.frame(id = dados$id_clicado))
+        dbx::dbxDelete(conn, 'projetos', where = data.frame(id = dados$projeto_id_sel))
         user$info_projeto <- get_projetos(user$pool) 
         
         poolReturn(conn)
