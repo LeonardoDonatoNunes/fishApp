@@ -120,7 +120,7 @@ create_fishApp_tables <- function(con) {
     CREATE TABLE  bases_fixas (
       id SERIAL PRIMARY KEY,
       projeto_id INTEGER NOT NULL,
-      nome_base VARCHAR NOT NULL,
+      nome VARCHAR NOT NULL,
       local_id INTEGER NOT NULL,
       equipamento_id INTEGER NOT NULL,
       data_hora_ini TIMESTAMP NOT NULL,

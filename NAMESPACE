@@ -3,6 +3,7 @@
 export(campo_obrigatorio_feedback)
 export(create_fishApp_bd)
 export(create_fishApp_tables)
+export(get_bases_fixas)
 export(get_equipamentos)
 export(get_locais)
 export(get_peixes)

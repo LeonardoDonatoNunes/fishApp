@@ -225,6 +225,36 @@ get_equipamentos <- function(con, projeto_id) {
   
 }
 
+#' Buscar bases_fixas
+#'
+#' @param con 
+#'
+#' @return data_frame
+#' @export
+#'
+#' @examples get_bases_fixas(con)
+get_bases_fixas <- function(con, projeto_id) {
+  
+  conn <- poolCheckout(con)
+  
+  query <- glue::glue("
+    select 
+    	bf.*,
+    	l.nome as nome_local,
+    	e.numero_serie
+    from bases_fixas bf
+    left join locais l on bf.local_id = l.id
+    left join equipamentos e on bf.equipamento_id = e.id
+    where bf.projeto_id = {projeto_id};
+  ")
+  
+  query_return <- DBI::dbGetQuery(conn, query)
+  
+  poolReturn(conn)
+  return(query_return)
+  
+}
+
 #' Buscar peixes
 #'
 #' @param con 
