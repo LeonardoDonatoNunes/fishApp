@@ -14,18 +14,27 @@ app_ui <- function(request) {
       dashboardHeader(
         title = tags$img(src = "www/logo_header.png"),
         dropdownMenuOutput('dropdown_upmenu_ui')
-        ),
+      ),
       dashboardSidebar(
-        sidebarMenu(
-          menuItem("Cadastro", icon = icon('list-check'), startExpanded = TRUE,
+        sidebarMenu(id = 'sidebar',
+          menuItem("Acompanhamento", icon = icon('chart-line'), startExpanded = TRUE,
+                   menuSubItem("Geral", tabName = 'acompanhamento_geral', icon = icon('angles-right'))
+          ),
+          menuItem("Cadastro", icon = icon('list-check'),
                    menuSubItem("Projetos", tabName = 'cadastro_projetos', icon = icon('angles-right')),
                    menuSubItem("Pessoas", tabName = 'cadastro_pessoas', icon = icon('angles-right')),
                    menuSubItem("Locais", tabName = 'cadastro_locais', icon = icon('angles-right')),
                    menuSubItem("Equipamentos", tabName = 'cadastro_equipamentos', icon = icon('angles-right')),
                    menuSubItem("Bases", tabName = 'cadastro_bases', icon = icon('angles-right')),
-                   menuSubItem("Espécies", tabName = 'cadastro_especies', icon = icon('angles-right')),
-                   menuSubItem("Peixes", tabName = 'cadastro_peixes', icon = icon('angles-right'))
-                   
+                   menuSubItem("Espécies", tabName = 'cadastro_especies', icon = icon('angles-right'))
+          ),
+          menuItem("Captura/Recaptura", icon = icon('fish-fins'),
+                   menuSubItem("Captura/Marcação", tabName = 'captura_marcacao', icon = icon('angles-right')),
+                   menuSubItem("Recaptura", tabName = 'recaptura', icon = icon('angles-right'))
+          ),
+          menuItem("Monitoramento", icon = icon('tower-cell'),
+                   menuSubItem("Downloads", tabName = 'downloads', icon = icon('angles-right')),
+                   menuSubItem("Registro manual", tabName = 'registro_manual', icon = icon('angles-right'))
           )
         )
       ),
@@ -37,7 +46,9 @@ app_ui <- function(request) {
           tabItem(tabName = 'cadastro_equipamentos',  mod_cadastro_pessoas_ui('cadastro_equipamentos')),
           tabItem(tabName = 'cadastro_bases', mod_cadastro_bases_ui('cadastro_bases')),
           tabItem(tabName = 'cadastro_especies',  mod_cadastro_pessoas_ui('cadastro_especies')),
-          tabItem(tabName = 'cadastro_peixes', mod_cadastro_peixes_ui('cadastro_peixes'))
+          tabItem(tabName = 'captura_marcacao', mod_cadastro_peixes_ui('captura_marcacao')),
+          tabItem(tabName = 'recaptura', mod_recaptura_ui('recaptura')),
+          tabItem(tabName = 'registro_manual', mod_registro_manual_ui('registro_manual'))
         )
       )
     )

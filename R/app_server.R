@@ -17,6 +17,7 @@
 #' @import DBI
 #' @import shinyFeedback
 #' @import RPostgreSQL
+#' @import lubridate
 #' 
 #' @noRd
 app_server <- function( input, output, session ) {
@@ -67,13 +68,17 @@ app_server <- function( input, output, session ) {
     
   })
   
+  observeEvent(input$sidebar, {
+    user$sidebar <- input$sidebar
+  })
+  
   mod_cadastro_projetos_server('cadastro_projetos', user = user)
   mod_cadastro_pessoas_server('cadastro_pessoas', user = user)
   mod_cadastro_locais_server('cadastro_locais', user = user)
   mod_cadastro_equipamentos_server('cadastro_equipamentos', user = user)
   mod_cadastro_bases_server("cadastro_bases", user = user)
   mod_cadastro_especies_server('cadastro_especies', user = user)
-  mod_cadastro_peixes_server("cadastro_peixes", user = user)
+  mod_cadastro_peixes_server("captura_marcacao", user = user)
   
   session$onSessionEnded(function() {
     stopApp()
@@ -314,3 +319,59 @@ icons <- function(color) {
     library = 'ion',
     markerColor = color)
 } 
+
+
+#' Comunica alterações para modulos dependentes
+#'
+#' @param historico_alteracoes 
+#' @param pagina_id 
+#'
+#' @return list
+#' @export
+#'
+informar_alteracao <- function(historico_alteracoes, pagina_id) {
+  
+  controle_alteracoes <- config::get()$controle_alteracoes
+  dep <- controle_alteracoes[[pagina_id]]$dependentes
+  dependentes <- setNames(rep(TRUE, length(dep)), dep) %>% as.list()
+  historico_alteracoes[[pagina_id]] <- dependentes
+  return(historico_alteracoes)
+  
+}
+
+#' Confirma a alteração no módulo dependente
+#'
+#' @param historico_alteracoes 
+#' @param pagina_id 
+#'
+#' @return list
+#' @export
+#'
+confirmar_alteracao <- function(historico_alteracoes, pagina_id) {
+  
+  atualizar_pagina <- FALSE
+  controle_alteracoes <- config::get()$controle_alteracoes
+  dep <- controle_alteracoes[[pagina_id]]$dependencias
+
+  
+  for (i in 1:length(dep)) {
+    pag_i <- historico_alteracoes[[dep[i]]]
+    
+    if (!is.null(pag_i)) {
+      
+      if (!is.null(pag_i[[pagina_id]])) {
+        
+        if (pag_i[[pagina_id]]) {
+          historico_alteracoes[[dep[i]]][[pagina_id]] <- FALSE
+          atualizar_pagina <- TRUE
+        }
+        
+      }
+      
+    }
+  }
+  
+  return(list(atualizar_pagina = atualizar_pagina, historico_alteracoes = historico_alteracoes))
+  
+  
+}

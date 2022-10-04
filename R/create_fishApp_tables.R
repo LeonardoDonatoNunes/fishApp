@@ -129,15 +129,6 @@ create_fishApp_tables <- function(con) {
       CONSTRAINT bases_fixas_local_FK FOREIGN KEY (local_id) REFERENCES locais(id) ON DELETE CASCADE ON UPDATE CASCADE,
       CONSTRAINT equipamentos_local_FK FOREIGN KEY (equipamento_id) REFERENCES equipamentos(id) ON DELETE CASCADE ON UPDATE CASCADE
     );
-    ",
-    
-    base_equipamento = "
-    CREATE TABLE  base_equipamento (
-      base_id INTEGER NOT NULL,
-      equipamento_id INTEGER NOT NULL,
-      CONSTRAINT base_equipamento_FK FOREIGN KEY (base_id) REFERENCES bases_fixas(id) ON DELETE CASCADE ON UPDATE CASCADE,
-      CONSTRAINT base_equipamento_FK_1 FOREIGN KEY (equipamento_id) REFERENCES equipamentos(id) ON DELETE CASCADE ON UPDATE CASCADE
-    );
     "
   )
   

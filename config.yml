@@ -1,0 +1,10 @@
+default:
+
+  controle_alteracoes:
+    cadastro_equipamentos:
+      dependentes: [cadastro_bases]
+    cadastro_locais:
+      dependentes: [cadastro_bases]
+    cadastro_bases:
+      dependencias: [cadastro_equipamentos, cadastro_locais]
+      

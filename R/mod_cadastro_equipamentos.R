@@ -204,6 +204,8 @@ mod_cadastro_equipamentos_server <- function(id, user){
           shinyjs::reset("modelo")
           
           dados$equipamentos <- get_equipamentos(user$pool,  user$info_projeto_sel$id)
+      
+          user$controle_alteracoes <- informar_alteracao(user$controle_alteracoes, id)
           
           shinyalert::shinyalert("Equipamento salvo!", type = "success")
           poolReturn(conn)
@@ -227,6 +229,7 @@ mod_cadastro_equipamentos_server <- function(id, user){
         poolReturn(conn)
         
         shinyalert::shinyalert(type = 'success', title = "Equipamento deletado")
+        user$controle_alteracoes <- informar_alteracao(user$controle_alteracoes, id)
         
         
       }, error = function(e) {

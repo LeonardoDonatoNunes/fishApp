@@ -39,7 +39,6 @@ mod_cadastro_locais_server <- function(id, user){
         
       }
       
-      
       fluidPage(
         tags$h3("Cadastro de locais"),
         column(
@@ -306,6 +305,8 @@ mod_cadastro_locais_server <- function(id, user){
           
           dados$locais <- get_locais(user$pool,  user$info_projeto_sel$id)
           
+          user$controle_alteracoes <- informar_alteracao(user$controle_alteracoes, id)
+        
           shinyalert::shinyalert("Local salvo!", type = "success")
           poolReturn(conn)
           
@@ -326,6 +327,8 @@ mod_cadastro_locais_server <- function(id, user){
         dados$locais <- get_locais(user$pool, user$info_projeto_sel$id) 
         
         poolReturn(conn)
+        
+        user$controle_alteracoes <- informar_alteracao(user$controle_alteracoes, id)
         
         shinyalert::shinyalert(type = 'success', title = "Local deletado")
         
