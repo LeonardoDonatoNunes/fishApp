@@ -59,28 +59,25 @@ mod_cadastro_bases_server <- function(id, user){
         
         vct_locais <- dados$locais$id %>% setNames(dados$locais$nome)
         
-        equipamentos_indisponiveis <- 
-          dados$bases_fixas %>% 
-          filter(is.na(data_hora_fim)) %>% 
-          pull(equipamento_id)
-        
       }
       
       
-      vct_equipamentos <- c("Nenhum equipamento disponível" = 0)
+      vct_equipamentos  <- c("Nenhum equipamento disponível" = 0)
       dados$equipamentos <- get_equipamentos(user$pool, user$info_projeto_sel$id)
       
-      if (!is.null(equipamentos_indisponiveis)) {
-        
-        dados$equipamentos <-
-          isolate(dados$equipamentos %>% 
-                    filter(!id %in% equipamentos_indisponiveis))
-        
-      }
+      equipamentos_indisponiveis <- 
+        dados$bases_fixas %>% 
+        filter(is.na(data_hora_fim)) %>% 
+        pull(equipamento_id)
       
-      if (nrow(dados$equipamentos) != 0) {
+      dados$equipamentos_disponiveis <-
+        isolate(dados$equipamentos %>% 
+                  filter(!id %in% equipamentos_indisponiveis))
+      
+      
+      if (nrow(dados$equipamentos_disponiveis) != 0) {
         
-        vct_equipamentos <- dados$equipamentos$id %>% setNames(dados$equipamentos$numero_serie)
+        vct_equipamentos <- dados$equipamentos_disponiveis$id %>% setNames(dados$equipamentos_disponiveis$numero_serie)
         
       }
       
@@ -143,6 +140,10 @@ mod_cadastro_bases_server <- function(id, user){
     output$tbl <- renderReactable({
       
       dados$bases_fixas %>% 
+        mutate(
+          data_hora_ini = format(data_hora_ini, '%d/%m/%Y %H:%M'),
+          data_hora_fim = format(data_hora_fim, '%d/%m/%Y %H:%M')
+        ) %>% 
         select(nome, nome_local, numero_serie, data_hora_ini, data_hora_fim, id, projeto_id, local_id, equipamento_id) %>% 
         reactable::reactable(
           onClick = "select", 
@@ -172,11 +173,74 @@ mod_cadastro_bases_server <- function(id, user){
       
       if (!is.null(input$tbl__reactable__selected)) {
         
+        aux <- dados$bases_fixas[input$tbl__reactable__selected, ]
+        dados$base_id_sel <- aux$id
+        
+        equipamentos_indisponiveis <- 
+          dados$bases_fixas %>% 
+          filter(is.na(data_hora_fim)) %>% 
+          pull(equipamento_id)
+        
+        equipamentos_indisponiveis <- equipamentos_indisponiveis[equipamentos_indisponiveis != aux$equipamento_id]
+        
+        equipamentos_disponiveis <-
+          isolate(dados$equipamentos %>% 
+                    filter(!id %in% equipamentos_indisponiveis))
+        
+        vct_equipamentos <- equipamentos_disponiveis$id %>% setNames(equipamentos_disponiveis$numero_serie)
+        
+        
+        updateTextInput(inputId = 'nome', value = aux$nome)
+        updateSelectInput(inputId = 'local_id', selected = aux$local_id)
+        updateSelectInput(inputId = 'equipamento_id', choices = vct_equipamentos, selected = aux$equipamento_id)
+        updateDateInput(inputId = 'data_inicio', value = aux$data_hora_ini)
+        updateTimeInput(session = session, inputId = 'hora_inicio', value = aux$data_hora_ini)
+        
+        
+        if (!is.na(aux$data_hora_fim)) {
+        
+          updateCheckboxInput(inputId = 'base_ativa', value = FALSE)
+          updateDateInput(inputId = 'data_fim', value = aux$data_hora_fim)
+          updateTimeInput(session = session, inputId = 'hora_fim', value = aux$data_hora_fim)
+          
+        } else {
+          updateCheckboxInput(inputId = 'base_ativa', value = TRUE)
+        }
+        
+        
+        updateActionButton(inputId = 'salvar', label = "Salvar alterações")
+        show('deletar')
+        
+        
       } else {
+        dados$base_id_sel <- NULL
+        shinyjs::reset('nome')
+        shinyjs::reset('local_id')
+        shinyjs::reset('data_inicio')
+        shinyjs::reset('hora_inicio')
+        shinyjs::reset('data_fim')
+        shinyjs::reset('hora_fim')
+        shinyjs::reset('base_ativa')
+        
+        
+        equipamentos_indisponiveis <- 
+          dados$bases_fixas %>% 
+          filter(is.na(data_hora_fim)) %>% 
+          pull(equipamento_id)
+        
+        equipamentos_disponiveis <-
+          isolate(dados$equipamentos %>% 
+                    filter(!id %in% equipamentos_indisponiveis))
+        
+        vct_equipamentos <- equipamentos_disponiveis$id %>% setNames(equipamentos_disponiveis$numero_serie)
+        updateSelectInput(inputId = 'equipamento_id', choices = vct_equipamentos)
+        
+        updateActionButton(inputId = 'salvar', label = "Salvar")
+        hide('deletar')
         
       }
       
-    })
+    }, ignoreNULL = FALSE, ignoreInit = TRUE)
     
     # Observe | base_ativa ---------------------------------------------------
     observeEvent(input$base_ativa, {
@@ -206,6 +270,7 @@ mod_cadastro_bases_server <- function(id, user){
           
           shinyFeedback::feedbackDanger('nome', text = "Base existente, não será possível salvar", show = TRUE)
           dados$teste_nome <- FALSE
+          
           
         } else {
           
@@ -263,7 +328,7 @@ mod_cadastro_bases_server <- function(id, user){
             
           } else {
             
-            dbx::dbxUpdate(conn, 'baes_fixas', tabela)
+            dbx::dbxUpdate(conn, 'bases_fixas', tabela, where_cols = 'id')
             
           }
           
@@ -274,6 +339,7 @@ mod_cadastro_bases_server <- function(id, user){
           shinyjs::reset("hora_fim")
           shinyjs::reset("base_ativa")
           
+          user$controle_alteracoes <- informar_alteracao(user$controle_alteracoes, id)
           
           shinyalert::shinyalert("Base fixa salva!", type = "success")
           poolReturn(conn)
@@ -281,6 +347,31 @@ mod_cadastro_bases_server <- function(id, user){
         }, error = function(e) {shinyalert::shinyalert(type = 'error', title = "Erro ao salvar base fixa", text = paste0(e))})
         
       }
+      
+    })
+    
+    
+    # Observe | deletar ------------------------------------------------------
+    observeEvent(input$deletar, {
+      
+      tryCatch({
+        
+        conn <- poolCheckout(user$pool)
+        
+        dbx::dbxDelete(conn, 'bases_fixas', where = data.frame(id = dados$base_id_sel))
+        dados$bases_fixas <- get_bases_fixas(user$pool, user$info_projeto_sel)
+        
+        poolReturn(conn)
+        
+        user$controle_alteracoes <- informar_alteracao(user$controle_alteracoes, id)
+        
+        shinyalert::shinyalert(type = 'success', title = "Base fixa deletada")
+        
+        
+      }, error = function(e) {
+        shinyalert::shinyalert(type = 'error', title = "Erro ao deletar base fixa", text = paste0(e))
+      })
+      
       
     })
     
