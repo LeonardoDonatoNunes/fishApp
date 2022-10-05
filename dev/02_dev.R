@@ -43,7 +43,7 @@ golem::add_module( name = "cadastro_pessoas" ) # cadastro_locais
 golem::add_module( name = "cadastro_equipamentos" ) # cadastro_locais
 golem::add_module( name = "captura_recaptura" ) # cadastro_locais
 golem::add_module( name = "cadastro_registro_manual" ) # cadastro_locais
-
+golem::add_module( name = "acompanhamento_geral" ) # cadastro_locais
 
 ## Add helper functions ----
 ## Creates fct_* and utils_*

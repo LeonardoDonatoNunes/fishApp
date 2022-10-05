@@ -72,6 +72,7 @@ app_server <- function( input, output, session ) {
     user$sidebar <- input$sidebar
   })
   
+  mod_acompanhamento_geral_server("acompanhamento_geral", user = user)
   mod_cadastro_projetos_server('cadastro_projetos', user = user)
   mod_cadastro_pessoas_server('cadastro_pessoas', user = user)
   mod_cadastro_locais_server('cadastro_locais', user = user)
@@ -352,7 +353,7 @@ confirmar_alteracao <- function(historico_alteracoes, pagina_id) {
   atualizar_pagina <- FALSE
   controle_alteracoes <- config::get()$controle_alteracoes
   dep <- controle_alteracoes[[pagina_id]]$dependencias
-
+  
   
   for (i in 1:length(dep)) {
     pag_i <- historico_alteracoes[[dep[i]]]
@@ -374,4 +375,39 @@ confirmar_alteracao <- function(historico_alteracoes, pagina_id) {
   return(list(atualizar_pagina = atualizar_pagina, historico_alteracoes = historico_alteracoes))
   
   
+}
+
+
+#' Loader de página em construção
+#'
+#' @return
+#' @export
+#'
+loader_pagina_em_construcao <- function() {
+  tags$div(class = 'loader_pagina_em_construcao',
+           img(src="www/loader.gif", width = 220, heigth = 220),
+           span('Página em construção!')
+  )
+}
+
+#' Modal de loader
+#'
+#' @param mensagem 
+#'
+#' @return
+#' @export
+#'
+#' @examples
+modal_loader <-  function(mensagem) {
+  shinyalert::shinyalert(
+    html = TRUE,
+    closeOnEsc = FALSE, 
+    showConfirmButton = FALSE,
+    text = tagList(
+      tags$div(class = 'modal_loader',
+               img(src="www/loader.gif", width = 220, heigth = 220),
+               span(mensagem)
+      )
+    )
+  )
 }

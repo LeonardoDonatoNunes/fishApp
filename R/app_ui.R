@@ -40,6 +40,7 @@ app_ui <- function(request) {
       ),
       dashboardBody(
         tabItems(
+          tabItem(tabName = 'acompanhamento_geral', mod_acompanhamento_geral_ui('acompanhamento_geral')),
           tabItem(tabName = 'cadastro_projetos', mod_cadastro_projetos_ui('cadastro_projetos')),
           tabItem(tabName = 'cadastro_pessoas',  mod_cadastro_pessoas_ui('cadastro_pessoas')),
           tabItem(tabName = 'cadastro_locais',  mod_cadastro_pessoas_ui('cadastro_locais')),
